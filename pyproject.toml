@@ -1,0 +1,47 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "physiocoach-nlp"
+version = "0.1.0"
+description = "Faithful natural-language exercise coaching (English + Urdu, with speech) generated from structured movement analysis."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Muhammad Mujtaba Khan Suri" }]
+dependencies = [
+    "pydantic>=2.5",
+    "pyyaml>=6.0",
+    "fastapi>=0.110",
+    "uvicorn>=0.27",
+]
+
+[project.optional-dependencies]
+# Fine-tuning, Flan-T5 inference, NLLB translation and MMS speech
+ml = [
+    "torch>=2.1",
+    "transformers>=4.40,<5",
+    "sentencepiece>=0.1.99",
+    "accelerate>=0.27",
+    "numpy>=1.24",
+]
+# Exported ONNX model for fast CPU inference
+onnx = ["optimum[onnxruntime]>=1.17"]
+# Evaluation metrics
+eval = ["sacrebleu>=2.4", "bert-score>=0.3.13"]
+# Optional faster English voice
+piper = ["piper-tts>=1.2"]
+dev = ["pytest>=8", "httpx>=0.27"]
+
+[project.scripts]
+physiocoach = "physiocoach.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+physiocoach = ["config/*.yaml", "web/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

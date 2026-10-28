@@ -1,0 +1,30 @@
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+build/
+dist/
+
+# generated artefacts (rebuild with the scripts)
+data/
+models/
+cache/
+results/
+*.zip
+
+.ipynb_checkpoints/
+.DS_Store
+.vscode/
+.idea/
+
+# extra local folders
+results*/
+data*/
+models/
+cache/
+src_backup/
+web_backup/
+*.onnx
+*.safetensors
+*.wav

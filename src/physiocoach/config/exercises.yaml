@@ -1,0 +1,306 @@
+# PhysioCoach-NLP exercise configuration
+# -----------------------------------------------------------------------------
+# Everything language-related lives here so templates, the record generator and
+# the faithfulness checker can never drift apart:
+#
+#   features  -> how synthetic movement values are sampled (normal vs. faulty)
+#   faults    -> what the coach says (cue / praise / session phrase / tip, in
+#                English and Urdu) and the regexes used to DETECT that a piece of
+#                text mentions the fault (used by the faithfulness checker)
+#
+# Placeholders available in text: {side} {side_ur} {limb} {limb_ur} {deficit}
+# {target_duration}. {side} renders as "left " / "right " / "" (note trailing
+# space) so "your {side}leg" reads naturally for unsided exercises too.
+#
+# Regexes are matched case-insensitively against lower-cased English text.
+# Keep correction regexes and praise regexes for the same fault disjoint.
+# -----------------------------------------------------------------------------
+
+thresholds:
+  fault_present: 0.5        # probability at or above which a fault counts as present
+  max_corrections_per_cue: 2
+
+sides:
+  left:  { en: "left ",  ur: "بائیں " }
+  right: { en: "right ", ur: "دائیں " }
+
+clean_rep:
+  en:
+    - "Great rep, keep it up."
+    - "Perfect form on that one."
+    - "That's exactly right, nice work."
+  ur:
+    - "بہترین ریپ، اسی طرح جاری رکھیں۔"
+    - "اس ریپ میں فارم بالکل درست تھا۔"
+    - "بالکل ٹھیک، بہت خوب۔"
+
+session_text:
+  opening:
+    en:
+      - "You completed {total} reps across {sets_phrase}."
+      - "That was {total} reps over {sets_phrase}."
+    ur:
+      - "آپ نے {sets} سیٹ میں کل {total} ریپس مکمل کیے۔"
+  sets_phrase_en: { one: "1 set", many: "{sets} sets" }
+  fault_line:
+    en_many: "{count} reps were {phrase}."
+    en_one: "1 rep was {phrase}."
+    ur_many: "{count} ریپس میں {phrase}۔"
+    ur_one: "1 ریپ میں {phrase}۔"
+  fatigue:
+    en:
+      - "{last_count} of them came in set {last_set}, which suggests fatigue near the end."
+      - "{last_count} of those were in set {last_set}, so fatigue may be setting in."
+    ur:
+      - "ان میں سے {last_count} ریپس سیٹ {last_set} میں تھے، جو آخر میں تھکاوٹ کی علامت ہو سکتی ہے۔"
+  clean:
+    en:
+      - "Every rep was clean. Great session."
+      - "Every rep had good form. Excellent work."
+    ur:
+      - "تمام ریپس درست تھے، بہترین سیشن۔"
+  rest_good:
+    en: ["Everything else looked good."]
+    ur: ["باقی سب کچھ اچھا تھا۔"]
+  tip:
+    en: ["Next time, {tip}."]
+    ur: ["اگلی بار، {tip}۔"]
+
+# Applies to every exercise
+generic:
+  features:
+    rep_duration_s: { normal: [1.6, 3.2], faults: { TOO_FAST: [0.6, 1.2] } }
+  faults:
+    TOO_FAST:
+      label: "too fast"
+      values: { target_duration: 2 }
+      cue:
+        en:
+          - "Slow down, take about {target_duration} seconds per rep."
+          - "That was rushed, aim for about {target_duration} seconds per rep."
+        ur:
+          - "رفتار کم کریں، ہر ریپ تقریباً {target_duration} سیکنڈ میں کریں۔"
+      praise:
+        en: ["Nice controlled pace."]
+        ur: ["رفتار اچھی اور قابو میں ہے۔"]
+      detect: ['slow down', 'rushed', '\bslower\b', 'take your time', 'too (fast|quick)',
+               '(mov|go)(ed|ing)? (too |a bit |a little )?(fast|quick)', '\bspeed\b']
+      praise_detect: ['controlled pace', 'good pace']
+      summary: { en: "too fast", ur: "رفتار بہت تیز تھی" }
+      summary_detect: ['too fast', 'rushed']
+      tip:
+        en: "slow each rep down to about {target_duration} seconds"
+        ur: "ہر ریپ کو تقریباً {target_duration} سیکنڈ تک آہستہ کریں"
+
+exercises:
+  side_leg_raise:
+    display: { en: "side leg raise", ur: "سائیڈ لیگ ریز" }
+    sided: true
+    limb: { en: "leg", ur: "ٹانگ" }
+    features:
+      target_hip_abduction_deg: { fixed: 40 }
+      peak_hip_abduction_deg:
+        relative_to: target_hip_abduction_deg
+        normal: [-3, 5]
+        faults: { SHALLOW: [-20, -6] }
+      knee_angle_deg: { normal: [166, 180], faults: { KNEE_BENT: [130, 158] } }
+      trunk_lean_deg: { normal: [0, 8], faults: { TORSO_LEAN: [13, 28] } }
+    faults:
+      SHALLOW:
+        label: "shallow"
+        deficit: { value: peak_hip_abduction_deg, target: target_hip_abduction_deg }
+        cue:
+          en:
+            - "Lift your {side}leg higher, about {deficit} degrees short."
+            - "Raise your {side}leg a little more, you're {deficit} degrees below target."
+            - "Go higher on the lift, around {deficit} degrees to go."
+          ur:
+            - "اپنی {side_ur}ٹانگ تھوڑی اور اوپر اٹھائیں، ابھی {deficit} ڈگری کم ہے۔"
+            - "{side_ur}ٹانگ کو مزید {deficit} ڈگری اوپر اٹھائیں۔"
+        praise:
+          en: ["Good height on that lift.", "Nice height on the raise."]
+          ur: ["ٹانگ کی اونچائی اچھی ہے۔"]
+        detect: ['\bhigher\b', 'a little more', 'degrees (short|below|to go)']
+        praise_detect: ['(good|nice) height']
+        summary: { en: "too shallow", ur: "ٹانگ پوری اونچائی تک نہیں گئی" }
+        summary_detect: ['shallow', 'not high enough']
+        tip:
+          en: "focus on lifting a little higher"
+          ur: "ٹانگ تھوڑی اور اونچی اٹھانے پر توجہ دیں"
+      KNEE_BENT:
+        label: "knee bent"
+        cue:
+          en:
+            - "Keep your knee straight as you lift."
+            - "Straighten your knee, it's bending."
+            - "Lock out the knee during the raise."
+          ur:
+            - "ٹانگ اٹھاتے وقت گھٹنا سیدھا رکھیں۔"
+            - "گھٹنا مڑ رہا ہے، اسے سیدھا رکھیں۔"
+        praise:
+          en: ["Knee is nice and straight.", "Good straight knee."]
+          ur: ["گھٹنا بالکل سیدھا ہے، شاباش۔"]
+        detect: ['keep (your |the )?knee straight', 'straighten (your |the )?knee', 'knee.{0,20}(bend|bent)',
+                 'lock out the knee']
+        praise_detect: ['knee (is|was|stayed) (nice and )?straight', 'straight knee']
+        summary: { en: "done with a bent knee", ur: "گھٹنا مڑا ہوا تھا" }
+        summary_detect: ['bent knee', 'knee (was )?bent', 'knee bend']
+        tip:
+          en: "keep the knee locked straight"
+          ur: "گھٹنا سیدھا رکھنے پر توجہ دیں"
+      TORSO_LEAN:
+        label: "torso lean"
+        cue:
+          en:
+            - "Keep your upper body upright, don't lean sideways."
+            - "Stay tall through your torso, no leaning."
+          ur:
+            - "جسم کا اوپری حصہ سیدھا رکھیں، ایک طرف نہ جھکیں۔"
+        praise:
+          en: ["Torso stayed steady."]
+          ur: ["جسم مستحکم رہا۔"]
+        detect: ['upright', '\blean', 'stay tall']
+        praise_detect: ['torso (stayed|is|was) steady', 'steady torso']
+        summary: { en: "done while leaning sideways", ur: "جسم ایک طرف جھکا ہوا تھا" }
+        summary_detect: ['\blean']
+        tip:
+          en: "keep your upper body tall"
+          ur: "جسم کا اوپری حصہ سیدھا رکھیں"
+
+  squat:
+    display: { en: "squat", ur: "اسکواٹ" }
+    sided: false
+    limb: { en: "legs", ur: "ٹانگیں" }
+    features:
+      target_knee_flexion_deg: { fixed: 100 }
+      peak_knee_flexion_deg:
+        relative_to: target_knee_flexion_deg
+        normal: [-3, 10]
+        faults: { SHALLOW: [-35, -8] }
+      knee_valgus_deg: { normal: [0, 6], faults: { KNEES_CAVE: [10, 22] } }
+      trunk_flexion_deg: { normal: [15, 40], faults: { FORWARD_LEAN: [50, 70] } }
+    faults:
+      SHALLOW:
+        label: "shallow"
+        deficit: { value: peak_knee_flexion_deg, target: target_knee_flexion_deg }
+        cue:
+          en:
+            - "Squat a bit deeper, about {deficit} degrees more."
+            - "Go lower, you're {deficit} degrees short of depth."
+          ur:
+            - "تھوڑا اور نیچے بیٹھیں، تقریباً {deficit} ڈگری مزید۔"
+        praise:
+          en: ["Good depth.", "Nice depth on that one."]
+          ur: ["گہرائی اچھی ہے۔"]
+        detect: ['deeper', 'go lower', 'short of depth', 'degrees (more|short)']
+        praise_detect: ['(good|nice) depth']
+        summary: { en: "too shallow", ur: "بیٹھک پوری گہری نہیں تھی" }
+        summary_detect: ['shallow', 'not deep enough']
+        tip:
+          en: "aim for a little more depth"
+          ur: "تھوڑا اور نیچے جانے کی کوشش کریں"
+      KNEES_CAVE:
+        label: "knees cave"
+        cue:
+          en:
+            - "Push your knees out over your toes."
+            - "Don't let your knees cave in."
+          ur:
+            - "گھٹنوں کو پنجوں کی سیدھ میں باہر کی طرف رکھیں۔"
+        praise:
+          en: ["Knees tracked well."]
+          ur: ["گھٹنے درست سیدھ میں رہے۔"]
+        detect: ['knees out', '\bcave', 'over your toes']
+        praise_detect: ['knees (tracked|stayed) (well|in line)']
+        summary: { en: "done with knees caving in", ur: "گھٹنے اندر کی طرف مڑ گئے" }
+        summary_detect: ['cav']
+        tip:
+          en: "push your knees out over your toes"
+          ur: "گھٹنوں کو پنجوں کی سیدھ میں رکھیں"
+      FORWARD_LEAN:
+        label: "forward lean"
+        cue:
+          en:
+            - "Keep your chest up."
+            - "You're leaning forward, lift your chest."
+          ur:
+            - "سینہ اوپر رکھیں، آگے نہ جھکیں۔"
+        praise:
+          en: ["Chest stayed up nicely."]
+          ur: ["سینہ اور کمر درست رہے۔"]
+        detect: ['chest up', 'lift your chest', 'leaning forward']
+        praise_detect: ['chest stayed up', 'good posture']
+        summary: { en: "done while leaning too far forward", ur: "جسم بہت آگے جھکا ہوا تھا" }
+        summary_detect: ['\blean']
+        tip:
+          en: "keep your chest up"
+          ur: "سینہ اوپر رکھیں"
+
+  shoulder_abduction:
+    display: { en: "shoulder abduction", ur: "شولڈر ابڈکشن" }
+    sided: true
+    limb: { en: "arm", ur: "بازو" }
+    features:
+      target_shoulder_abduction_deg: { fixed: 90 }
+      peak_shoulder_abduction_deg:
+        relative_to: target_shoulder_abduction_deg
+        normal: [-4, 6]
+        faults: { SHALLOW: [-35, -8] }
+      shoulder_elevation_deg: { normal: [0, 5], faults: { SHRUG: [9, 20] } }
+      elbow_angle_deg: { normal: [165, 180], faults: { ELBOW_BENT: [120, 155] } }
+    faults:
+      SHALLOW:
+        label: "shallow"
+        deficit: { value: peak_shoulder_abduction_deg, target: target_shoulder_abduction_deg }
+        cue:
+          en:
+            - "Raise your {side}arm higher, about {deficit} degrees to go."
+            - "Lift your {side}arm a bit more, {deficit} degrees short of shoulder height."
+          ur:
+            - "{side_ur}بازو تھوڑا اور اوپر اٹھائیں، ابھی {deficit} ڈگری باقی ہے۔"
+        praise:
+          en: ["Good range on the arm."]
+          ur: ["بازو کی حرکت پوری ہے۔"]
+        detect: ['\bhigher\b', 'a bit more', 'degrees (to go|short)']
+        praise_detect: ['good range']
+        summary: { en: "short of full height", ur: "بازو پوری اونچائی تک نہیں گیا" }
+        summary_detect: ['short of full', 'not high enough', 'shallow']
+        tip:
+          en: "raise the arm all the way to shoulder height"
+          ur: "بازو کندھے کی اونچائی تک پورا اٹھائیں"
+      SHRUG:
+        label: "shrug"
+        cue:
+          en:
+            - "Keep your shoulder down, don't shrug."
+            - "Relax your shoulder away from your ear."
+          ur:
+            - "کندھا نیچے رکھیں، اسے کان کی طرف نہ اٹھائیں۔"
+        praise:
+          en: ["Shoulder stayed relaxed."]
+          ur: ["کندھا پرسکون رہا۔"]
+        detect: ['shrug', 'shoulder down', 'away from your ear']
+        praise_detect: ['shoulder stayed relaxed', 'relaxed shoulder']
+        summary: { en: "done with a shoulder shrug", ur: "کندھا اوپر اٹھا ہوا تھا" }
+        summary_detect: ['shrug']
+        tip:
+          en: "keep the shoulder relaxed and down"
+          ur: "کندھا نیچے اور پرسکون رکھیں"
+      ELBOW_BENT:
+        label: "elbow bent"
+        cue:
+          en:
+            - "Keep your elbow straight."
+            - "Straighten your arm fully."
+          ur:
+            - "کہنی سیدھی رکھیں۔"
+        praise:
+          en: ["Arm stayed straight."]
+          ur: ["بازو سیدھا رہا۔"]
+        detect: ['elbow straight', 'straighten your (arm|elbow)', 'elbow.{0,15}bend']
+        praise_detect: ['arm stayed straight']
+        summary: { en: "done with a bent elbow", ur: "کہنی مڑی ہوئی تھی" }
+        summary_detect: ['bent elbow', 'elbow (was )?bent']
+        tip:
+          en: "keep the elbow straight"
+          ur: "کہنی سیدھی رکھیں"

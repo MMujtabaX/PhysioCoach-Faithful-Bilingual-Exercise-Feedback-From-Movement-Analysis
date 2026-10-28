@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PhysioCoach-NLP</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Noto+Nastaliq+Urdu:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="inner">
+    <a class="brand" href="#demo">PhysioCoach<span>-NLP</span></a>
+    <nav id="nav" aria-label="Sections">
+      <a href="#demo" data-tab="demo">Demo</a>
+      <a href="#compare" data-tab="compare">Compare</a>
+      <a href="#live" data-tab="live">Live session</a>
+      <a href="/docs" target="_blank" rel="noopener">API docs<span class="ext" aria-hidden="true">↗</span></a>
+    </nav>
+  </div>
+</header>
+
+<!-- ============ Demo ============ -->
+<div class="wrap" id="tab-demo" data-title="Demo">
+  <div class="page-head">
+    <h1>Feedback demo</h1>
+    <p>Structured movement analysis in, faithful coaching out — English or Urdu, read or spoken.</p>
+  </div>
+  <div class="chips status" id="demo-status"></div>
+
+  <div class="cols">
+    <section class="panel">
+      <h2>Input record</h2>
+      <div class="row">
+        <label class="field">Exercise<select id="demo-exercise"></select></label>
+        <div class="seg" id="demo-kind">
+          <button data-v="rep" class="active">Single rep</button>
+          <button data-v="session">Session</button>
+        </div>
+        <button class="ghost" id="demo-randomBtn">Random record</button>
+      </div>
+      <textarea id="demo-json" spellcheck="false" aria-label="Record JSON"></textarea>
+    </section>
+
+    <section class="panel">
+      <h2>Feedback</h2>
+      <div class="row">
+        <label class="field">Generator<select id="demo-backend">
+          <option value="template">A · Template baseline</option>
+          <option value="t5">B · Fine-tuned Flan-T5</option>
+          <option value="t5-guided">B+ · Flan-T5, checker-guided sampling</option>
+          <option value="llm">C · Few-shot LLM (Ollama)</option>
+        </select></label>
+        <div class="seg" id="demo-lang">
+          <button data-v="en" class="active">English</button>
+          <button data-v="ur">اردو</button>
+        </div>
+      </div>
+      <div class="row">
+        <label class="check"><input type="checkbox" id="demo-speak"> Speak</label>
+        <label class="check" title="Instant Urdu from hand-written templates (no translation delay). Untick to use machine translation."><input type="checkbox" id="demo-live" checked> Live mode</label>
+        <label class="check" title="Turn off only for the ablation study"><input type="checkbox" id="demo-check" checked> Faithfulness check</label>
+      </div>
+      <div class="row"><button class="primary" id="demo-goBtn">Generate feedback</button></div>
+
+      <div id="demo-out" class="feedback empty">Pick or edit a record, then generate feedback.</div>
+      <div class="badges" id="demo-badges"></div>
+      <audio id="demo-audio" controls hidden></audio>
+      <dl id="demo-facts"></dl>
+      <div class="error" id="demo-error"></div>
+      <details><summary>Full response</summary><pre id="demo-raw"></pre></details>
+    </section>
+  </div>
+</div>
+
+<!-- ============ Compare ============ -->
+<div class="wrap" id="tab-compare" data-title="Compare generators" hidden>
+  <div class="page-head">
+    <h1>Compare generators</h1>
+    <p>The same movement analysis, four generators. Sentences that state something the analysis did not find are marked in red, and the patient hears the safe template instead.</p>
+  </div>
+  <section class="panel">
+    <div class="controls">
+      <label class="field">Exercise<select id="cmp-exercise"></select></label>
+      <div class="seg" id="cmp-kind"><button data-v="rep" class="active">Single rep</button><button data-v="session">Session</button></div>
+      <label class="field">Faults<select id="cmp-pfault">
+        <option value="0.25">Few</option><option value="0.5" selected>Some</option><option value="0.8">Many</option>
+      </select></label>
+      <div class="field">Generators<div class="chips" id="cmp-backends"></div></div>
+      <button class="ghost" id="cmp-randomBtn">New record</button>
+      <button class="primary" id="cmp-goBtn">Compare</button>
+    </div>
+  </section>
+
+  <div class="layout">
+    <aside class="panel facts" id="cmp-facts"><h2>What the analysis found</h2><div class="muted small">Pick a record.</div></aside>
+    <div>
+      <div class="legend"><span class="l-ok">says only what was found</span><span class="l-bad">states something not in the analysis</span></div>
+      <div class="grid" id="cmp-grid"></div>
+      <details><summary>Record JSON (edit, then Compare)</summary>
+        <textarea id="cmp-json" spellcheck="false" aria-label="Record JSON"></textarea></details>
+      <div class="error" id="cmp-error"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ Live session ============ -->
+<div class="wrap" id="tab-live" data-title="Live session" hidden>
+  <div class="page-head">
+    <h1>Live session</h1>
+    <p>A simulated workout: after every rep the coach reads the analysis and says one short cue, then summarises the whole session at the end.</p>
+  </div>
+  <section class="panel">
+    <div class="controls">
+      <label class="field">Exercise<select id="live-exercise"></select></label>
+      <label class="field">Sets<input type="number" id="live-sets" min="1" max="4" value="2"></label>
+      <label class="field">Reps per set<input type="number" id="live-reps" min="3" max="15" value="8"></label>
+      <label class="field">Generator<select id="live-backend">
+        <option value="template">A · Template</option>
+        <option value="t5">B · Flan-T5</option>
+        <option value="t5-guided">B+ · Flan-T5 guided</option>
+      </select></label>
+      <div class="seg" id="live-lang"><button data-v="en" class="active">English</button><button data-v="ur">اردو</button></div>
+      <label class="field">Pace<select id="live-pace"><option value="1500">Fast</option><option value="3000" selected>Normal</option><option value="4500">Slow</option></select></label>
+      <label class="check"><input type="checkbox" id="live-speak" checked> Speak</label>
+      <button class="primary" id="live-startBtn">Start session</button>
+      <button class="ghost" id="live-stopBtn" disabled>Stop</button>
+    </div>
+  </section>
+
+  <div class="stage">
+    <section class="panel now">
+      <div class="where"><span class="rep" id="live-where">Ready</span><span class="of" id="live-of"></span></div>
+      <div class="progress"><div id="live-bar"></div></div>
+      <div class="cue idle" id="live-cue">Choose an exercise and press Start. Each rep's analysis is sent to the coach, and the cue appears (and is spoken) right after the rep.</div>
+      <div class="chips" id="live-repFaults"></div>
+      <div class="meta" id="live-meta"></div>
+      <div class="error" id="live-error"></div>
+    </section>
+    <div class="side-col">
+      <section class="panel"><h2>Faults so far</h2><div class="bars" id="live-tally"><div class="muted small">Nothing yet.</div></div></section>
+      <section class="panel"><h2>Reps</h2><div id="live-tilesWrap"><div class="muted small">Each rep appears here: green is clean, amber had a fault.</div></div></section>
+    </div>
+  </div>
+
+  <section class="panel summary" id="live-summary" hidden>
+    <h2>Session summary</h2>
+    <div class="text" id="live-summaryText"></div>
+    <div class="meta" id="live-summaryMeta" style="margin-top:8px"></div>
+  </section>
+</div>
+<!-- outside the tab panels so playback is independent of which tab is shown -->
+<audio id="live-audio" preload="auto"></audio>
+
+<footer>Documentation assistant only: it rewords what the movement analysis found and does not diagnose or prescribe.</footer>
+
+<script src="/static/common.js"></script>
+<script src="/static/demo.js"></script>
+<script src="/static/compare.js"></script>
+<script src="/static/live.js"></script>
+<script src="/static/app.js"></script>
+</body>
+</html>

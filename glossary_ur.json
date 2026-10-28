@@ -1,0 +1,5 @@
+{
+  "_comment": "Post-edit glossary for machine-translated Urdu: \"machine wording\": \"preferred wording\". Run scripts/evaluate_translation.py, read the machine_translation column, and add entries for stiff or wrong terms you see repeatedly. Keys starting with _ are ignored.",
+  "_example_bookish_to_spoken": "بلند کریں -> اوپر اٹھائیں",
+  "بلند کریں": "اوپر اٹھائیں"
+}
