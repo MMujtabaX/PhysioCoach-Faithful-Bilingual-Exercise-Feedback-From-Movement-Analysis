@@ -159,6 +159,21 @@ pre { background: var(--code-bg); border-radius: 8px; padding: 10px; overflow: a
                                     margin-right: 6px; vertical-align: -1px; }
 #tab-compare .legend .l-bad::before { background: var(--bad-soft); border: 1px solid var(--bad); }
 #tab-compare .legend .l-ok::before { background: var(--panel); border: 1px solid var(--line); }
+#tab-compare .score { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; margin: 0 0 12px; padding: 10px 14px;
+                      background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); }
+#tab-compare .score .item { flex: 1 1 130px; min-width: 0; display: flex; flex-direction: column; gap: 5px; font-size: 12.5px; }
+#tab-compare .score .top { display: flex; flex-wrap: wrap; gap: 2px 8px; align-items: baseline; }
+#tab-compare .score .name { font-weight: 700; }
+#tab-compare .score .val { font-variant-numeric: tabular-nums; }
+#tab-compare .score .track { height: 5px; background: var(--code-bg); border-radius: 99px; overflow: hidden; }
+#tab-compare .score .fill { height: 100%; width: 0; transition: width 0.3s; }
+#tab-compare .score .fill.good { background: var(--good); }
+#tab-compare .score .fill.warn { background: var(--warn); }
+#tab-compare .score .fill.bad { background: var(--bad); }
+#tab-compare .score button.link { margin-left: auto; border: 0; background: none; padding: 2px 0; cursor: pointer;
+                                  color: var(--accent); font-size: 12.5px; font-weight: 500; }
+#tab-compare .score button.link:hover { text-decoration: underline; }
+#tab-compare .card .score-line:empty { display: none; }
 #tab-compare details { margin-top: 16px; }
 #tab-compare details textarea { margin-top: 8px; }
 #tab-compare .error { margin-top: 10px; }
@@ -173,6 +188,24 @@ pre { background: var(--code-bg); border-radius: 8px; padding: 10px; overflow: a
 #tab-live .cue { font-size: 25px; line-height: 1.45; font-weight: 500; min-height: 80px; overflow-wrap: anywhere; }
 #tab-live .cue.ur { font-family: var(--urdu); font-size: 26px; line-height: 2.2; font-weight: 400; }
 #tab-live .cue.idle { color: var(--muted); font-size: 16.5px; font-weight: 400; }
+/* "speaking" wave: always laid out (visibility only) so the cue never jumps */
+#tab-live .speaking { display: flex; align-items: center; gap: 8px; height: 18px; margin-top: -6px; visibility: hidden; }
+#tab-live .speaking.on { visibility: visible; }
+#tab-live .speaking .label { color: var(--muted); font-size: 12.5px; }
+#tab-live .wave { display: inline-flex; align-items: center; gap: 3px; height: 18px; }
+#tab-live .wave span { width: 3px; height: 100%; border-radius: 99px; background: var(--accent); transform: scaleY(0.3);
+                       animation: wave 0.9s ease-in-out infinite; }
+#tab-live .wave span:nth-child(2) { animation-duration: 0.7s; animation-delay: -0.2s; }
+#tab-live .wave span:nth-child(3) { animation-duration: 1.05s; animation-delay: -0.4s; }
+#tab-live .wave span:nth-child(4) { animation-duration: 0.8s; animation-delay: -0.1s; }
+#tab-live .wave span:nth-child(5) { animation-duration: 0.95s; animation-delay: -0.3s; }
+#tab-live .speaking:not(.on) .wave span { animation-play-state: paused; }
+@keyframes wave { 0%, 100% { transform: scaleY(0.3); } 50% { transform: scaleY(1); } }
+@media (prefers-reduced-motion: reduce) {
+  #tab-live .wave span { animation: none; transform: scaleY(0.6); }
+  #tab-live .wave span:nth-child(2), #tab-live .wave span:nth-child(4) { transform: scaleY(0.9); }
+  #tab-live .wave span:nth-child(3) { transform: scaleY(0.45); }
+}
 #tab-live .progress { height: 6px; border-radius: 99px; background: var(--code-bg); overflow: hidden; }
 #tab-live .progress > div { height: 100%; width: 0; background: var(--accent); transition: width 0.3s; }
 #tab-live .tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(22px, 1fr)); gap: 4px; }

@@ -97,6 +97,7 @@
   <div class="layout">
     <aside class="panel facts" id="cmp-facts"><h2>What the analysis found</h2><div class="muted small">Pick a record.</div></aside>
     <div>
+      <div class="score" id="cmp-score"></div>
       <div class="legend"><span class="l-ok">says only what was found</span><span class="l-bad">states something not in the analysis</span></div>
       <div class="grid" id="cmp-grid"></div>
       <details><summary>Record JSON (edit, then Compare)</summary>
@@ -135,6 +136,10 @@
       <div class="where"><span class="rep" id="live-where">Ready</span><span class="of" id="live-of"></span></div>
       <div class="progress"><div id="live-bar"></div></div>
       <div class="cue idle" id="live-cue">Choose an exercise and press Start. Each rep's analysis is sent to the coach, and the cue appears (and is spoken) right after the rep.</div>
+      <div class="speaking" id="live-speaking">
+        <span class="wave" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></span>
+        <span class="label" id="live-speakingLabel" aria-live="polite"></span>
+      </div>
       <div class="chips" id="live-repFaults"></div>
       <div class="meta" id="live-meta"></div>
       <div class="error" id="live-error"></div>

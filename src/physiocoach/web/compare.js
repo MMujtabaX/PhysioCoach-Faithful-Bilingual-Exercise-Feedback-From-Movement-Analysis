@@ -9,6 +9,32 @@
     "llm": ["C · LLM", "few-shot, local Ollama"],
   };
   const state = { kind: "rep", backends: new Set(["template", "t5", "t5-guided", "llm"]), available: {} };
+  // running faithfulness score per generator since page load (memory only)
+  const score = {};
+  const resetScore = () => { for (const b of Object.keys(NAMES)) score[b] = { ok: 0, n: 0 }; };
+  resetScore();
+
+  const scoreLine = (b) => score[b].n ? `Session score: ${score[b].ok}/${score[b].n} faithful` : "";
+
+  function renderScore() {
+    const any = Object.values(score).some((s) => s.n);
+    $("score").innerHTML = !any ? `<span class="muted small">Run comparisons to build a score.</span>`
+      : Object.keys(NAMES).map((b) => {
+        const { ok, n } = score[b];
+        const short = NAMES[b][0].split(" · ")[0];
+        const pct = n ? Math.round(100 * ok / n) : 0;
+        const level = pct >= 90 ? "good" : pct >= 50 ? "warn" : "bad";
+        return `<div class="item"><div class="top"><span class="name">${short}</span>
+          <span class="val">${n ? `Faithful ${ok}/${n} · ${pct}%` : `<span class="muted">no results</span>`}</span></div>
+          <div class="track"><div class="fill ${level}" style="width:${pct}%"></div></div></div>`;
+      }).join("") + `<button type="button" class="link" id="cmp-resetScore">Reset score</button>`;
+    for (const el of $("grid").querySelectorAll(".score-line")) el.textContent = scoreLine(el.dataset.b);
+  }
+  $("score").addEventListener("click", (e) => {
+    if (e.target.id !== "cmp-resetScore") return;
+    resetScore(); renderScore();
+  });
+  renderScore();
 
   function renderBackendChips() {
     $("backends").innerHTML = Object.keys(NAMES).map((b) => {
@@ -99,7 +125,8 @@
       ${problems.length ? `<ul class="problems">${problems.map((p) => `<li>${esc(p)}</li>`).join("")}</ul>` : ""}
       ${ann.missed.length ? `<div class="missed">Missed: ${ann.missed.map(esc).join(", ")}</div>` : ""}
       ${r.replacement ? `<div class="replacement"><b>Patient hears instead:</b> ${esc(r.replacement)}</div>` : ""}
-      <div class="meta">${Math.round(r.latency_ms).toLocaleString()} ms${dec}</div></div>`;
+      <div class="meta">${Math.round(r.latency_ms).toLocaleString()} ms${dec}</div>
+      <div class="meta score-line" data-b="${r.backend}">${scoreLine(r.backend)}</div></div>`;
   }
 
   $("goBtn").addEventListener("click", async () => {
@@ -118,7 +145,10 @@
         const res = await api("/api/compare", { method: "POST", headers: { "Content-Type": "application/json" },
                                                 body: JSON.stringify({ [key]: data, backends: [b] }) });
         if (!factsShown) { renderFacts(res.facts); factsShown = true; }
-        $(`card-${b}`).outerHTML = renderCard(res.results[0]);
+        const r = res.results[0];
+        if (r.available) { score[b].n++; if (r.faithful) score[b].ok++; }  // count before rendering so the card shows it
+        $(`card-${b}`).outerHTML = renderCard(r);
+        renderScore();
       } catch (e) {
         $(`card-${b}`).outerHTML = renderCard({ backend: b, available: false, error: e.message });
       }

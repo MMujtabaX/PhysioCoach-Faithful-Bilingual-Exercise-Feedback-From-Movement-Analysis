@@ -20,6 +20,7 @@
       if (info && !info.available) { opt.disabled = true; opt.textContent += " (not available)"; }
     }
     if (st.tts && st.tts.configured === "none") { $("speak").checked = false; $("speak").disabled = true; }
+    $("startBtn").disabled = false;  // only once the exercise list and status are in
   }
 
   function playAudio(url) {
@@ -33,6 +34,14 @@
       setTimeout(finish, 12000);  // never hang on a stuck clip
     });
   }
+
+  // "speaking" wave: driven only by the audio element's own events, so it can never outlive playback
+  function setSpeaking(on) {
+    $("speaking").classList.toggle("on", on);
+    $("speakingLabel").textContent = on ? "Speaking…" : "";
+  }
+  $("audio").addEventListener("playing", () => setSpeaking(true));
+  for (const ev of ["pause", "ended", "error", "emptied", "abort"]) $("audio").addEventListener(ev, () => setSpeaking(false));
 
   function setCue(text, lang) {
     const c = $("cue");
@@ -61,15 +70,15 @@
   async function run() {
     $("error").textContent = ""; $("summary").hidden = true;
     state.running = true; $("startBtn").disabled = true; $("stopBtn").disabled = false;
-    const exercise = $("exercise").value;
-    const sets = Math.min(4, Math.max(1, +$("sets").value || 2));
-    const reps = Math.min(15, Math.max(3, +$("reps").value || 8));
-    const backend = $("backend").value;
-    let speak = $("speak").checked;
-    const pace = +$("pace").value;
-    const lang = state.lang;
-    const labels = state.exercises[exercise].faults;
     try {
+      const exercise = $("exercise").value;
+      const sets = Math.min(4, Math.max(1, +$("sets").value || 2));
+      const reps = Math.min(15, Math.max(3, +$("reps").value || 8));
+      const backend = $("backend").value;
+      let speak = $("speak").checked;
+      const pace = +$("pace").value;
+      const lang = state.lang;
+      const labels = state.exercises[exercise].faults;
       const session = await api(`/api/sample/session?exercise=${exercise}&sets=${sets}&reps_per_set=${reps}`);
       buildTiles(session);
       const counts = {};
@@ -129,9 +138,10 @@
     }
   }
 
+  $("startBtn").disabled = true;  // enabled at the end of init()
   $("startBtn").addEventListener("click", run);
   $("stopBtn").addEventListener("click", () => {
-    state.running = false; $("audio").pause();
+    state.running = false; $("audio").pause(); setSpeaking(false);
     $("where").textContent = "Stopped"; $("of").textContent = "";
   });
   init().catch((e) => { $("error").textContent = e.message; });
