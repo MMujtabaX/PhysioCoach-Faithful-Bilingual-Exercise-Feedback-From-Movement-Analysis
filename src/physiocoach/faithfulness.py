@@ -43,6 +43,7 @@ class CheckResult:
     wrong_praise: list[str] = field(default_factory=list)
     unexpected_numbers: list[int] = field(default_factory=list)
     wrong_claims: list[str] = field(default_factory=list)   # a number attached to the wrong fact
+    misdescribed: list[str] = field(default_factory=list)   # a fault described in the wrong direction
     side_error: bool = False
 
     @property
@@ -57,6 +58,7 @@ class CheckResult:
         if self.unexpected_numbers:
             out.append(f"unsupported numbers: {self.unexpected_numbers}")
         out.extend(self.wrong_claims)
+        out.extend(self.misdescribed)
         if self.side_error:
             out.append("wrong side mentioned")
         return out
@@ -69,6 +71,17 @@ class CheckResult:
 
 def _matches(patterns, text: str) -> bool:
     return any(p.search(text) for p in patterns)
+
+
+def _misdescribed(text: str, ex) -> list[str]:
+    """Wording that misdescribes a fault of this exercise (e.g. 'lean forward' for a sideways torso lean)."""
+    problems = []
+    for f in ex.faults.values():
+        for p in f.contradict:
+            m = p.search(text)
+            if m:
+                problems.append(f"describes {f.label} wrongly ('{m.group(0)}')")
+    return problems
 
 
 def _side_error(text: str, side: str | None) -> bool:
@@ -160,6 +173,7 @@ def check_rep(text: str, record: RepRecord, cfg: CoachConfig | None = None) -> C
         wrong_praise=[c for c in praised if c in facts.present],
         unexpected_numbers=sorted({n for n in nums if n not in facts.allowed_numbers}),
         wrong_claims=_rep_claims(text, facts),
+        misdescribed=_misdescribed(text, ex),
         side_error=_side_error(text, facts.side),
     )
     res.faithful = not res.issues and bool(text.strip())
@@ -181,6 +195,7 @@ def check_session(text: str, session: SessionRecord, cfg: CoachConfig | None = N
         hallucinated=[c for c in mentioned if c not in facts.occurred],
         unexpected_numbers=sorted({n for n in nums if n not in facts.allowed_numbers}),
         wrong_claims=_session_claims(text, facts),
+        misdescribed=_misdescribed(text, ex),
         side_error=_side_error(text, session.side) if session.side is None else False,
     )
     res.faithful = not res.issues and bool(text.strip())
@@ -223,6 +238,7 @@ def annotate_rep(text: str, record: RepRecord, cfg: CoachConfig | None = None) -
         if _side_error(sentence, facts.side):
             problems.append("mentions the wrong side")
         problems = _merge(problems, _rep_claims(sentence, facts))
+        problems += _misdescribed(sentence, ex)
         out.append({
             "text": sentence,
             "mentions": [ex.faults[c].label for c in mentioned],
@@ -247,6 +263,7 @@ def annotate_session(text: str, session: SessionRecord, cfg: CoachConfig | None 
         problems += [f"the number {n} is not supported by the session"
                      for n in sorted({n for n in extract_numbers_en(sentence) if n not in facts.allowed_numbers})]
         problems = _merge(problems, _session_claims(sentence, facts))
+        problems += _misdescribed(sentence, ex)
         out.append({"text": sentence, "mentions": [ex.faults[c].label for c in mentioned], "praises": [],
                     "problems": problems})
     missed = [ex.faults[c].label for c in facts.notable if c not in mentioned_all]

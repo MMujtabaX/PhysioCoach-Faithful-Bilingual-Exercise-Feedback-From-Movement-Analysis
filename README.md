@@ -10,7 +10,7 @@
 [![Transformers](https://img.shields.io/badge/Hugging%20Face-Transformers-FFD21E?logo=huggingface&logoColor=black)](https://huggingface.co/docs/transformers)
 [![ONNX Runtime](https://img.shields.io/badge/ONNX%20Runtime-int8-005CED?logo=onnx&logoColor=white)](https://onnxruntime.ai/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-service-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
-[![Tests](https://img.shields.io/badge/tests-62%20passing-2ea44f)](#quick-start)
+[![Tests](https://img.shields.io/badge/tests-78%20passing-2ea44f)](#quick-start)
 [![License: MIT](https://img.shields.io/badge/License-MIT-0B1F3A)](LICENSE)
 
 <!-- DEMO GIF: record ~30 s of the Compare tab (LLM sentence turning red) and the Live session speaking,
@@ -116,7 +116,7 @@ git clone https://github.com/MMujtabaX/PhysioCoach.git
 cd PhysioCoach
 python -m venv .venv && source .venv/bin/activate     # Windows: .venv\Scripts\Activate.ps1
 pip install -e ".[dev]"
-pytest                                                # 62 tests
+pytest                                                # 78 tests
 physiocoach serve                                     # http://127.0.0.1:8000
 ```
 

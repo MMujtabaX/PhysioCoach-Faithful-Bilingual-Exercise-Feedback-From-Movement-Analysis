@@ -41,6 +41,7 @@ class FaultSpec:
     tip: dict[str, str]
     deficit: dict[str, str] | None = None
     values: dict[str, Any] = field(default_factory=dict)
+    contradict: tuple[re.Pattern, ...] = ()   # wording that misdescribes this fault for this exercise
 
 
 @dataclass(frozen=True)
@@ -108,6 +109,7 @@ def _fault(code: str, raw: dict) -> FaultSpec:
         tip=raw["tip"],
         deficit=raw.get("deficit"),
         values=raw.get("values", {}),
+        contradict=_compile(raw.get("contradict")),
     )
 
 

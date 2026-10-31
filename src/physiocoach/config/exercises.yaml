@@ -122,6 +122,7 @@ exercises:
           ur: ["ٹانگ کی اونچائی اچھی ہے۔"]
         detect: ['\bhigher\b', 'a little more', 'degrees (short|below|to go)']
         praise_detect: ['(good|nice) height']
+        contradict: ['go lower', '\bdeeper\b', '\bdepth\b', '\bsquat', '\barm\b', 'shoulder height']
         summary: { en: "too shallow", ur: "ٹانگ پوری اونچائی تک نہیں گئی" }
         summary_detect: ['shallow', 'not high enough']
         tip:
@@ -161,6 +162,8 @@ exercises:
           ur: ["جسم مستحکم رہا۔"]
         detect: ['upright', '\blean', 'stay tall']
         praise_detect: ['torso (stayed|is|was) steady', 'steady torso']
+        contradict: ['lean(ing)? forward', 'forward lean', 'leaning forward', 'chest up', 'lift your chest',
+                     'chest stayed up', 'shoulder down', '\bshrug']
         summary: { en: "done while leaning sideways", ur: "جسم ایک طرف جھکا ہوا تھا" }
         summary_detect: ['\blean']
         tip:
@@ -194,6 +197,7 @@ exercises:
           ur: ["گہرائی اچھی ہے۔"]
         detect: ['deeper', 'go lower', 'short of depth', 'degrees (more|short)']
         praise_detect: ['(good|nice) depth']
+        contradict: ['\bhigher\b', 'lift your (left |right )?(leg|arm)', 'raise your (left |right )?(leg|arm)', 'shoulder height']
         summary: { en: "too shallow", ur: "بیٹھک پوری گہری نہیں تھی" }
         summary_detect: ['shallow', 'not deep enough']
         tip:
@@ -230,6 +234,7 @@ exercises:
           ur: ["سینہ اور کمر درست رہے۔"]
         detect: ['chest up', 'lift your chest', 'leaning forward']
         praise_detect: ['chest stayed up', 'good posture']
+        contradict: ['sideways', 'to the side', 'lean(ing)? (to the )?(left|right)']
         summary: { en: "done while leaning too far forward", ur: "جسم بہت آگے جھکا ہوا تھا" }
         summary_detect: ['\blean']
         tip:
@@ -263,6 +268,7 @@ exercises:
           ur: ["بازو کی حرکت پوری ہے۔"]
         detect: ['\bhigher\b', 'a bit more', 'degrees (to go|short)']
         praise_detect: ['good range']
+        contradict: ['go lower', '\bdeeper\b', '\bdepth\b', '\bsquat', '\bleg\b', 'above shoulder height']
         summary: { en: "short of full height", ur: "بازو پوری اونچائی تک نہیں گیا" }
         summary_detect: ['short of full', 'not high enough', 'shallow']
         tip:
@@ -281,6 +287,7 @@ exercises:
           ur: ["کندھا پرسکون رہا۔"]
         detect: ['shrug', 'shoulder down', 'away from your ear']
         praise_detect: ['shoulder stayed relaxed', 'relaxed shoulder']
+        contradict: ['over your toes']
         summary: { en: "done with a shoulder shrug", ur: "کندھا اوپر اٹھا ہوا تھا" }
         summary_detect: ['shrug']
         tip:
@@ -299,6 +306,7 @@ exercises:
           ur: ["بازو سیدھا رہا۔"]
         detect: ['elbow straight', 'straighten your (arm|elbow)', 'elbow.{0,15}bend']
         praise_detect: ['arm stayed straight']
+        contradict: ['\bknees?\b']
         summary: { en: "done with a bent elbow", ur: "کہنی مڑی ہوئی تھی" }
         summary_detect: ['bent elbow', 'elbow (was )?bent']
         tip:
